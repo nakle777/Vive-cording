@@ -1,0 +1,116 @@
+
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>바이브코딩 참가자 조회</title>
+  <style>
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", sans-serif; 
+           line-height: 1.5; margin: 0; padding: 0; background: #f7f7fb; }
+    .wrap { max-width: 520px; margin: 8vh auto; background: #fff; border-radius: 16px; padding: 28px; box-shadow: 0 8px 30px rgba(0,0,0,.06); }
+    h1 { font-size: 20px; margin: 0 0 18px; }
+    label { display:block; font-size: 14px; margin: 12px 0 4px; color:#444; }
+    input { width: 100%; padding: 12px 14px; font-size: 16px; border: 1px solid #e2e2ea; border-radius: 10px; outline: none; }
+    input:focus { border-color:#6366f1; box-shadow: 0 0 0 3px rgba(99,102,241,.15); }
+    button { margin-top: 16px; width: 100%; padding: 12px 14px; font-size: 16px; border: 0; border-radius: 10px; background:#6366f1; color:#fff; cursor:pointer; }
+    button:hover { filter: brightness(1.05); }
+    .hint { font-size: 12px; color:#6b7280; margin-top:8px; }
+    .msg { margin-top:12px; font-size: 14px; }
+    .ok { color:#065f46; background:#ecfdf5; padding:10px; border-radius:10px; }
+    .warn { color:#7c2d12; background:#fff7ed; padding:10px; border-radius:10px; }
+    .admin { margin-top: 24px; font-size: 12px; color:#6b7280; }
+    .admin a { color:#4f46e5; text-decoration:none; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>바이브코딩 참가자 조회</h1>
+    <p class="hint">참가자 이름(C열)과 보호자 성함(I열)을 입력하면, 매핑표(<code>mapping.csv</code>)에서 찾아 지정된 링크로 이동합니다.</p>
+    <label for="pname">참가자 이름</label>
+    <input id="pname" type="text" placeholder="예: 홍길동" autocomplete="off">
+    <label for="gname">보호자 성함</label>
+    <input id="gname" type="text" placeholder="예: 김OO" autocomplete="off">
+    <button id="go">조회 후 이동</button>
+    <div id="msg" class="msg"></div>
+    <div class="admin">
+      관리자 안내: 배포 폴더에 <strong>mapping.csv</strong>를 함께 올리고, <em>link</em> 열에 각 링크를 채워주세요.<br>
+      (CSV 인코딩: UTF-8-BOM, 헤더: 참가자 이름, 보호자 성함, link)
+    </div>
+  </div>
+
+<script>
+async function loadMapping() {
+  const res = await fetch('mapping.csv?' + Date.now());
+  if (!res.ok) throw new Error('mapping.csv 로드 실패');
+  const txt = await res.text();
+  return parseCSV(txt);
+}
+
+function parseCSV(text) {
+  // very small CSV parser for 3 columns (with UTF-8 BOM safe)
+  text = text.replace(/^\uFEFF/, '');
+  const lines = text.split(/\r?\n/).filter(Boolean);
+  const header = lines.shift().split(',').map(h => h.trim());
+  const nameIdx = header.indexOf('참가자 이름');
+  const parentIdx = header.indexOf('보호자 성함');
+  const linkIdx = header.indexOf('link');
+  const rows = lines.map(line => {
+    // naive split; if your data contains commas within fields, switch to a robust CSV parser
+    const parts = line.split(',').map(x => x.trim());
+    return {
+      pname: (parts[nameIdx] || '').trim(),
+      gname: (parts[parentIdx] || '').trim(),
+      link: (parts[linkIdx] || '').trim()
+    };
+  });
+  return rows;
+}
+
+function normalize(k) {
+  return k.replace(/\s+/g,'').toLowerCase();
+}
+
+document.getElementById('go').addEventListener('click', async () => {
+  const pname = document.getElementById('pname').value.trim();
+  const gname = document.getElementById('gname').value.trim();
+  const msg = document.getElementById('msg');
+  msg.textContent = '';
+
+  if (!pname || !gname) {
+    msg.className = 'msg warn';
+    msg.textContent = '두 항목을 모두 입력해 주세요.';
+    return;
+  }
+
+  let rows;
+  try {
+    rows = await loadMapping();
+  } catch (e) {
+    msg.className = 'msg warn';
+    msg.textContent = '매핑 파일(mapping.csv)을 찾을 수 없습니다. 함께 업로드했는지 확인해 주세요.';
+    return;
+  }
+
+  const key = normalize(pname) + '|' + normalize(gname);
+  const match = rows.find(r => (normalize(r.pname) + '|' + normalize(r.gname)) === key);
+
+  if (!match) {
+    msg.className = 'msg warn';
+    msg.textContent = '일치하는 항목이 없습니다. 철자/띄어쓰기 확인 또는 mapping.csv를 확인해 주세요.';
+    return;
+  }
+  if (!match.link) {
+    msg.className = 'msg warn';
+    msg.textContent = '일치하는 항목을 찾았지만 링크가 비어 있습니다. mapping.csv의 link 값을 채워 주세요.';
+    return;
+  }
+
+  msg.className = 'msg ok';
+  msg.textContent = '확인되었습니다. 곧 링크로 이동합니다...';
+  // redirect
+  window.location.href = match.link;
+});
+</script>
+</body>
+</html>
