@@ -1,0 +1,126 @@
+
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>바이브코딩 참가자 조회 (조회만)</title>
+  <style>
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", sans-serif;
+           line-height:1.5; margin:0; background:#f7f7fb; }
+    .wrap { max-width: 580px; margin: 8vh auto; background:#fff; border-radius:16px; padding:28px; box-shadow:0 8px 30px rgba(0,0,0,.06); }
+    h1 { font-size:20px; margin: 0 0 18px; }
+    label { display:block; font-size:14px; margin:12px 0 4px; color:#444; }
+    input { width:100%; padding:12px 14px; font-size:16px; border:1px solid #e2e2ea; border-radius:10px; outline:none; }
+    input:focus { border-color:#6366f1; box-shadow:0 0 0 3px rgba(99,102,241,.15); }
+    button { margin-top:16px; width:100%; padding:12px 14px; font-size:16px; border:0; border-radius:10px; background:#111827; color:#fff; cursor:pointer; }
+    .msg { margin-top:12px; font-size:14px; }
+    .ok { color:#065f46; background:#ecfdf5; padding:10px; border-radius:10px; }
+    .warn { color:#7c2d12; background:#fff7ed; padding:10px; border-radius:10px; }
+    .card { margin-top:16px; padding:14px; border:1px solid #e5e7eb; border-radius:12px; background:#fafafa; }
+    .row { display:flex; gap:8px; align-items:center; }
+    .row input { flex:1; }
+    .actions { display:flex; gap:8px; margin-top:10px; }
+    .ghost { background:#f3f4f6; color:#111827; }
+    .hint { font-size:12px; color:#6b7280; margin-top:8px; }
+    .admin { margin-top: 24px; font-size: 12px; color:#6b7280; }
+    .admin code { color:#4f46e5; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>바이브코딩 참가자 조회 (조회만)</h1>
+    <p class="hint">구글 앱스 스크립트(GAS) 웹앱으로 조회만 수행합니다. 자동 이동(리다이렉트)은 하지 않습니다.</p>
+
+    <label for="pname">참가자 이름</label>
+    <input id="pname" type="text" placeholder="예: 홍길동" autocomplete="off">
+    <label for="gname">보호자 성함</label>
+    <input id="gname" type="text" placeholder="예: 김OO" autocomplete="off">
+    <button id="go">조회</button>
+
+    <div id="msg" class="msg"></div>
+
+    <div id="result" class="card" style="display:none;">
+      <div><b>조회 결과</b></div>
+      <div class="row" style="margin-top:8px;">
+        <input id="link" type="text" readonly>
+        <button id="copy" class="ghost">복사</button>
+      </div>
+      <div class="actions">
+        <a id="open" class="ghost" href="#" target="_blank" style="text-decoration:none;display:inline-block;padding:10px 14px;border-radius:10px;border:1px solid #e5e7eb;">새 탭에서 열기</a>
+      </div>
+      <div class="hint">링크를 복사하거나 ‘새 탭에서 열기’를 눌러 이동하세요.</div>
+    </div>
+
+    <div class="admin">
+      관리자 설정: 아래 상단 스크립트의 <code>GAS_URL</code>, <code>ACCESS_TOKEN</code> 값을 본인 환경으로 교체하세요.
+    </div>
+  </div>
+
+<script>
+// ▼▼▼ 본인 웹앱 /exec 주소 & 토큰으로 교체 ▼▼▼
+const GAS_URL = "YOUR_WEB_APP_DEPLOY_URL"; // 예: https://script.google.com/macros/s/AKfycbx.../exec
+const ACCESS_TOKEN = "YOUR_TOKEN"; // 미사용 시 ""
+
+function normalize(k){ return (k||'').replace(/\s+/g,'').toLowerCase(); }
+
+async function lookup(pname, gname){
+  const url = new URL(GAS_URL);
+  url.searchParams.set("pname", pname);
+  url.searchParams.set("gname", gname);
+  if (ACCESS_TOKEN) url.searchParams.set("token", ACCESS_TOKEN);
+  const res = await fetch(url.toString(), { method: "GET" });
+  if(!res.ok) throw new Error("서버 응답 오류: " + res.status);
+  return await res.json();
+}
+
+function showResult(link){
+  const box = document.getElementById('result');
+  const inp = document.getElementById('link');
+  const open = document.getElementById('open');
+  inp.value = link || "";
+  open.href = link || "#";
+  box.style.display = "block";
+}
+
+document.getElementById('go').addEventListener('click', async () => {
+  const pname = document.getElementById('pname').value.trim();
+  const gname = document.getElementById('gname').value.trim();
+  const msg = document.getElementById('msg');
+  const card = document.getElementById('result');
+  card.style.display = "none";
+  msg.className = "msg"; msg.textContent = "";
+
+  if (!pname || !gname){
+    msg.className = "msg warn"; msg.textContent = "두 항목을 모두 입력해 주세요."; return;
+  }
+  try {
+    const r = await lookup(pname, gname);
+    if (!r || r.ok !== true){
+      msg.className = "msg warn"; msg.textContent = (r && r.error) ? r.error : "일치하는 항목이 없습니다."; return;
+    }
+    if (!r.link){
+      msg.className = "msg warn"; msg.textContent = "일치하는 항목을 찾았지만 link가 비어 있습니다."; return;
+    }
+    msg.className = "msg ok"; msg.textContent = "조회 완료. 아래 링크를 확인하세요.";
+    showResult(r.link);
+  } catch (e){
+    msg.className = "msg warn"; msg.textContent = e.message;
+  }
+});
+
+document.getElementById('copy').addEventListener('click', async () => {
+  const v = document.getElementById('link').value;
+  try {
+    await navigator.clipboard.writeText(v);
+    alert('복사되었습니다.');
+  } catch(e){
+    // fallback
+    const inp = document.getElementById('link');
+    inp.select(); document.execCommand('copy');
+    alert('복사되었습니다.');
+  }
+});
+</script>
+</body>
+</html>
