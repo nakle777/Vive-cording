@@ -4,7 +4,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>바이브코딩 참가자 조회 (GAS 연동)</title>
+  <title>바이브코딩 참가자 조회</title>
   <style>
     body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", sans-serif; 
            line-height: 1.5; margin: 0; padding: 0; background: #f7f7fb; }
@@ -24,23 +24,18 @@
 </head>
 <body>
   <div class="wrap">
-    <h1>바이브코딩 참가자 조회 (GAS 연동)</h1>
-    <p class="hint">*구글 스프레드시트 앱스 스크립트 웹앱*으로 조회합니다. 데이터는 깃허브에 올리지 않습니다.</p>
+    <h1>바이브코딩 참가자 조회</h1>
     <label for="pname">참가자 이름</label>
     <input id="pname" type="text" placeholder="예: 홍길동" autocomplete="off">
     <label for="gname">보호자 성함</label>
     <input id="gname" type="text" placeholder="예: 김OO" autocomplete="off">
     <button id="go">조회 후 이동</button>
     <div id="msg" class="msg"></div>
-
-    <div class="admin">
-      관리자 설정: 이 파일 상단의 <code>GAS_URL</code> 과 <code>ACCESS_TOKEN</code> 값을 당신의 배포 URL/토큰으로 교체하세요.
-    </div>
   </div>
 
 <script>
 // ▼▼▼ 여기를 당신의 앱스 스크립트 웹앱 URL(최종 배포 URL)로 교체하세요 ▼▼▼
-const GAS_URL = "YOUR_WEB_APP_DEPLOY_URL"; https://script.google.com/macros/s/AKfycbyZ-e-6Lw2A73d6ehryrfUqOW7UxWGCmNVUFZ-rzSCavxNA_cX5R96gMAJgQ0G_og56aA/exec//
+const GAS_URL = https://script.google.com/macros/s/AKfycbyZ-e-6Lw2A73d6ehryrfUqOW7UxWGCmNVUFZ-rzSCavxNA_cX5R96gMAJgQ0G_og56aA/exec
 // 선택: 간단한 보안용 토큰(서버 코드와 일치해야 함). 원치 않으면 빈 문자열로 두세요.
 const ACCESS_TOKEN = "YOUR_TOKEN";
 
