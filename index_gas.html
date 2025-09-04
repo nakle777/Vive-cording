@@ -1,0 +1,83 @@
+
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>바이브코딩 참가자 조회 (GAS 연동)</title>
+  <style>
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", sans-serif; 
+           line-height: 1.5; margin: 0; padding: 0; background: #f7f7fb; }
+    .wrap { max-width: 520px; margin: 8vh auto; background: #fff; border-radius: 16px; padding: 28px; box-shadow: 0 8px 30px rgba(0,0,0,.06); }
+    h1 { font-size: 20px; margin: 0 0 18px; }
+    label { display:block; font-size: 14px; margin: 12px 0 4px; color:#444; }
+    input { width: 100%; padding: 12px 14px; font-size: 16px; border: 1px solid #e2e2ea; border-radius: 10px; outline: none; }
+    input:focus { border-color:#6366f1; box-shadow: 0 0 0 3px rgba(99,102,241,.15); }
+    button { margin-top: 16px; width: 100%; padding: 12px 14px; font-size: 16px; border: 0; border-radius: 10px; background:#111827; color:#fff; cursor:pointer; }
+    .msg { margin-top:12px; font-size: 14px; }
+    .ok { color:#065f46; background:#ecfdf5; padding:10px; border-radius:10px; }
+    .warn { color:#7c2d12; background:#fff7ed; padding:10px; border-radius:10px; }
+    .hint { font-size: 12px; color:#6b7280; margin-top:8px; }
+    .admin { margin-top: 24px; font-size: 12px; color:#6b7280; }
+    .admin code { color:#4f46e5; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>바이브코딩 참가자 조회 (GAS 연동)</h1>
+    <p class="hint">*구글 스프레드시트 앱스 스크립트 웹앱*으로 조회합니다. 데이터는 깃허브에 올리지 않습니다.</p>
+    <label for="pname">참가자 이름</label>
+    <input id="pname" type="text" placeholder="예: 홍길동" autocomplete="off">
+    <label for="gname">보호자 성함</label>
+    <input id="gname" type="text" placeholder="예: 김OO" autocomplete="off">
+    <button id="go">조회 후 이동</button>
+    <div id="msg" class="msg"></div>
+
+    <div class="admin">
+      관리자 설정: 이 파일 상단의 <code>GAS_URL</code> 과 <code>ACCESS_TOKEN</code> 값을 당신의 배포 URL/토큰으로 교체하세요.
+    </div>
+  </div>
+
+<script>
+// ▼▼▼ 여기를 당신의 앱스 스크립트 웹앱 URL(최종 배포 URL)로 교체하세요 ▼▼▼
+const GAS_URL = "YOUR_WEB_APP_DEPLOY_URL"; // 예: https://script.google.com/macros/s/AKfycbx.../exec
+// 선택: 간단한 보안용 토큰(서버 코드와 일치해야 함). 원치 않으면 빈 문자열로 두세요.
+const ACCESS_TOKEN = "YOUR_TOKEN";
+
+function normalize(k){ return (k||'').replace(/\s+/g,'').toLowerCase(); }
+
+async function lookup(pname, gname){
+  const url = new URL(GAS_URL);
+  url.searchParams.set("pname", pname);
+  url.searchParams.set("gname", gname);
+  if (ACCESS_TOKEN) url.searchParams.set("token", ACCESS_TOKEN);
+  const res = await fetch(url.toString(), { method: "GET" });
+  if(!res.ok) throw new Error("서버 응답 오류: " + res.status);
+  return await res.json();
+}
+
+document.getElementById('go').addEventListener('click', async () => {
+  const pname = document.getElementById('pname').value.trim();
+  const gname = document.getElementById('gname').value.trim();
+  const msg = document.getElementById('msg');
+  msg.textContent = "";
+  if (!pname || !gname){
+    msg.className = "msg warn"; msg.textContent = "두 항목을 모두 입력해 주세요."; return;
+  }
+  try {
+    const r = await lookup(pname, gname);
+    if (!r || r.ok !== true){
+      msg.className = "msg warn"; msg.textContent = (r && r.error) ? r.error : "일치하는 항목이 없습니다."; return;
+    }
+    if (!r.link){
+      msg.className = "msg warn"; msg.textContent = "일치하는 항목을 찾았지만 링크가 비어 있습니다."; return;
+    }
+    msg.className = "msg ok"; msg.textContent = "확인되었습니다. 곧 링크로 이동합니다...";
+    window.location.href = r.link;
+  } catch (e){
+    msg.className = "msg warn"; msg.textContent = e.message;
+  }
+});
+</script>
+</body>
+</html>
