@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>바이브코딩 참가자 조회 (자동 이동)</title>
+  <title>바이브코딩 참가자 조회</title>
   <style>
     body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", sans-serif;
            line-height:1.5; margin:0; background:#f7f7fb; }
@@ -20,7 +20,7 @@
 </head>
 <body>
   <div class="wrap">
-    <h1>바이브코딩 참가자 조회 (자동 이동)</h1>
+    <h1>바이브코딩 참가자 조회</h1>
     <label for="pname">참가자 이름</label>
     <input id="pname" type="text" placeholder="예: 홍길동" autocomplete="off">
     <label for="gname">보호자 성함</label>
@@ -30,8 +30,8 @@
   </div>
 
 <script>
-const GAS_URL = "REPLACE_WITH_YOUR_DEPLOYED_WEB_APP_URL";
-const ACCESS_TOKEN = "REPLACE_WITH_YOUR_TOKEN"; // 토큰 미사용 시 ""
+const GAS_URL = "https://script.google.com/macros/s/AKfycbzrfhH1Hcku7nD1FwGp6ohTbR9BF205joF49fzxaO1z5vFOEQg7qKawhgyHdmjriguR_Q/exec";
+const ACCESS_TOKEN = ""; // 토큰 미사용 시 ""
 
 async function lookup(pname, gname){
   const url = new URL(GAS_URL);
